@@ -1,0 +1,4 @@
+kong_data/
+*.log
+.DS_Store
+.env
