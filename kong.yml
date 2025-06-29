@@ -1,0 +1,17 @@
+_format_version: "3.0"
+services:
+  - name: product-service
+    url: http://host.docker.internal:6001
+    routes:
+      - name: product-route
+        paths:
+          - /product-service
+        strip_path: true
+
+  - name: user-service
+    url: http://host.docker.internal:6002
+    routes:
+      - name: user-route
+        paths:
+          - /user-service
+        strip_path: true

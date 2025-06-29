@@ -1,5 +1,8 @@
+version: "3.8"
+
 services:
-  kong-database: # PostgreSQL cho Kong metadata
+  # PostgreSQL cho Kong metadata (nếu muốn chạy ở chế độ DB-backed, nhưng với dbless có thể bỏ)
+  kong-database:
     image: postgres:13
     container_name: kong_database
     environment:
@@ -10,13 +13,13 @@ services:
       - "5432:5432"
     volumes:
       - kong_data:/var/lib/postgresql/data
-    healthcheck: # Kiểm tra DB ready trước khi start Kong. Kong cần database để lưu cấu hình (services, routes, plugins).
+    healthcheck:
       test: ["CMD-SHELL", "pg_isready -U kong"]
       interval: 5s
       timeout: 3s
       retries: 5
 
-  kong-migration: # Chạy migration cho Kong DB
+  kong-migration:
     image: kong:3.4.2
     container_name: kong_migration
     command: "kong migrations bootstrap"
@@ -28,28 +31,26 @@ services:
       KONG_PG_DATABASE: kong
     depends_on:
       kong-database:
-        condition: service_healthy # Chờ DB healthy
+        condition: service_healthy
 
-  kong: # Gateway Kong chính
+  kong:
     image: kong:3.4.2
     container_name: kong_gateway
     environment:
-      KONG_DATABASE: postgres
-      KONG_PG_HOST: kong-database
-      KONG_PG_USER: kong
-      KONG_PG_PASSWORD: kongpass
-      KONG_PG_DATABASE: kong
+      # Chuyển sang DB-less với declarative config
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong.yml
+      # Logging
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    volumes:
+      - ./kong.yml:/kong.yml:ro
     ports:
-      - "8000:8000" # Gateway
-      - "8001:8001" # Admin
-    depends_on:
-      kong-migration:
-        condition: service_completed_successfully
+      - "8000:8000"
+      - "8001:8001"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "kong health"]
