@@ -8,10 +8,10 @@ services:
           - /product-service
         strip_path: true
 
-  - name: user-service
+  - name: order-service
     url: http://host.docker.internal:6002
     routes:
-      - name: user-route
+      - name: order-route
         paths:
-          - /user-service
+          - /order-service
         strip_path: true
